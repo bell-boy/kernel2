@@ -1,0 +1,22 @@
+[project]
+name = "kernel2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "argparse>=1.4.0",
+    "gpt-image>=0.9.1",
+    "pyfatfs>=1.1.0",
+    "setuptools<81",
+]
+
+[project.scripts]
+buildtool = "buildtool.build:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["buildtool*"]
