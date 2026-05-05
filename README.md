@@ -1,3 +1,9 @@
 # another operating system
 
-proving to my self i can do it the right way
+THIS time is different trust
+
+to build + run qemu
+
+```python
+uv run buildtool qemu
+```
