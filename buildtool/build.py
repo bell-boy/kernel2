@@ -7,16 +7,19 @@ from fs import open_fs
 from pyfatfs.PyFat import PyFat
 import argparse
 
-CFLAGS = [
+CXXFLAGS = [
     "--target=aarch64-none-elf",
     "-Wall",
     "-Wextra",
-    "-std=gnu99",
+    "-std=c++23",
     "-ffreestanding",
     "-fno-stack-protector",
     "-fno-stack-check",
     "-fno-lto",
     "-fno-PIC",
+    "-fno-exceptions",
+    "-fno-rtti",
+    "-fno-use-cxa-atexit",
     "-ffunction-sections",
     "-fdata-sections",
     "-march=armv8-a",
@@ -44,23 +47,23 @@ def parse_args():
     qemu_parser.set_defaults(func=qemu)
     return parser.parse_args()
 
-def _find_c_files(directory: str) -> List[str]:
-    c_files = []
+def _find_source_files(directory: str) -> List[str]:
+    source_files = []
     for item in os.listdir(directory):
         path = os.path.join(directory, item)
         if os.path.isdir(path):
-            c_files.extend(_find_c_files(path))
-        elif fnmatch.fnmatch(item, "*.c"):
-            c_files.append(path)
-    return c_files
+            source_files.extend(_find_source_files(path))
+        elif fnmatch.fnmatch(item, "*.cc"):
+            source_files.append(path)
+    return source_files
 
-def _create_object_files(c_files: List[str]):
+def _create_object_files(source_files: List[str]):
     object_files = []
-    for file in c_files:
+    for file in source_files:
         filename, _ = os.path.splitext(file)
         output_path = os.path.join("build", filename + ".o")
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        cmds = ["clang", *CFLAGS, "-c", file, "-o", output_path] 
+        cmds = ["clang++", *CXXFLAGS, "-c", file, "-o", output_path]
         result = subprocess.run(cmds, capture_output=True, text=True)
         if result.returncode != 0:
             raise RuntimeError(f"{result.stderr}")
@@ -80,10 +83,10 @@ def _copy_to_fat_disk(disk, src_path, dest_path):
             dst.write(src.read())
 
 def build():
-    # find c files
-    c_files = _find_c_files("src")
+    # find source files
+    source_files = _find_source_files("src")
     # create object files
-    o_files = _create_object_files(c_files)
+    o_files = _create_object_files(source_files)
     # link binary
     binary = _link_binary(o_files) 
     # create image

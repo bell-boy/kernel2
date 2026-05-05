@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <stdbool.h>
 #include <limine.h>
 
 // Set the base revision to 0 for compatibility with the bundled Limine EFI.
@@ -35,9 +34,9 @@ static volatile uint64_t limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARK
 // DO NOT remove or rename these functions, or stuff will eventually break!
 // They CAN be moved to a different .c file.
 
-void *memcpy(void *restrict dest, const void *restrict src, size_t n) {
-    uint8_t *restrict pdest = dest;
-    const uint8_t *restrict psrc = src;
+extern "C" void *memcpy(void *dest, const void *src, size_t n) {
+    uint8_t *pdest = static_cast<uint8_t *>(dest);
+    const uint8_t *psrc = static_cast<const uint8_t *>(src);
 
     for (size_t i = 0; i < n; i++) {
         pdest[i] = psrc[i];
@@ -46,8 +45,8 @@ void *memcpy(void *restrict dest, const void *restrict src, size_t n) {
     return dest;
 }
 
-void *memset(void *s, int c, size_t n) {
-    uint8_t *p = s;
+extern "C" void *memset(void *s, int c, size_t n) {
+    uint8_t *p = static_cast<uint8_t *>(s);
 
     for (size_t i = 0; i < n; i++) {
         p[i] = (uint8_t)c;
@@ -56,9 +55,9 @@ void *memset(void *s, int c, size_t n) {
     return s;
 }
 
-void *memmove(void *dest, const void *src, size_t n) {
-    uint8_t *pdest = dest;
-    const uint8_t *psrc = src;
+extern "C" void *memmove(void *dest, const void *src, size_t n) {
+    uint8_t *pdest = static_cast<uint8_t *>(dest);
+    const uint8_t *psrc = static_cast<const uint8_t *>(src);
 
     if ((uintptr_t)src > (uintptr_t)dest) {
         for (size_t i = 0; i < n; i++) {
@@ -73,9 +72,9 @@ void *memmove(void *dest, const void *src, size_t n) {
     return dest;
 }
 
-int memcmp(const void *s1, const void *s2, size_t n) {
-    const uint8_t *p1 = s1;
-    const uint8_t *p2 = s2;
+extern "C" int memcmp(const void *s1, const void *s2, size_t n) {
+    const uint8_t *p1 = static_cast<const uint8_t *>(s1);
+    const uint8_t *p2 = static_cast<const uint8_t *>(s2);
 
     for (size_t i = 0; i < n; i++) {
         if (p1[i] != p2[i]) {
@@ -96,14 +95,14 @@ static void hcf(void) {
 // The following will be our kernel's entry point.
 // If renaming kmain() to something else, make sure to change the
 // linker script accordingly.
-void kmain(void) {
+extern "C" void kmain(void) {
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
         hcf();
     }
 
     // Ensure we got a framebuffer.
-    if (framebuffer_request.response == NULL) {
+    if (framebuffer_request.response == nullptr) {
         hcf();
     }
     if (framebuffer_request.response->framebuffer_count < 1) {
@@ -111,11 +110,11 @@ void kmain(void) {
     }
 
     // Fetch the first framebuffer.
-    struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+    limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
     // Print a nice pattern to screen as an example.
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-    volatile uint32_t *fb_ptr = framebuffer->address;
+    volatile uint32_t *fb_ptr = static_cast<volatile uint32_t *>(framebuffer->address);
     for (size_t y = 0; y < framebuffer->height; y++) {
         for (size_t x = 0; x < framebuffer->width; x++) {
             uint32_t nX = x * 255 / framebuffer->width;
