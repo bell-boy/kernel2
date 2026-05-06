@@ -122,10 +122,10 @@ def qemu():
         "-bios", "bin/QEMU_EFI.fd",
         "-drive", "if=none,file=build/kernel.img,format=raw,id=hd0",
         "-device", "virtio-blk-device,drive=hd0",
-        "-device", "ramfb",
         "-serial", "stdio",
         "-monitor", "none",
-        "-display", "cocoa",
+        "-display", "none",
+        "-semihosting-config", "enable=on,target=native"
     ], check=True)
 
 def main():
