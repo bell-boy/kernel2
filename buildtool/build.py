@@ -114,19 +114,20 @@ def build():
 
 def qemu():
     build()
-    subprocess.run([
+    result = subprocess.run([
         "qemu-system-aarch64",
-        "-M", "virt",
-        "-cpu", "cortex-a57",
+        "-machine", "virt,acpi=off",
+        "-cpu", "cortex-a72",
+        "-smp", "1",
         "-m", "512M",
         "-bios", "bin/QEMU_EFI.fd",
         "-drive", "if=none,file=build/kernel.img,format=raw,id=hd0",
         "-device", "virtio-blk-device,drive=hd0",
-        "-serial", "stdio",
+        #        "-serial", "stdio",
         "-monitor", "none",
         "-display", "none",
         "-semihosting-config", "enable=on,target=native"
-    ], check=True)
+    ], check=True, text=True)
 
 def main():
     args = parse_args()

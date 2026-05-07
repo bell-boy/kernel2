@@ -4,12 +4,12 @@
 #include <kio.h>
 
 __attribute__((used, section(".limine_requests")))
-static volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(4);
+static volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(6);
 
 __attribute__((used, section(".limine_requests")))
-static volatile struct limine_dtb_request dtb_request {
+static volatile struct limine_dtb_request dtb_request = {
   .id = LIMINE_DTB_REQUEST_ID,
-  .revision = 4
+  .revision = 6
 };
 
 
@@ -38,7 +38,7 @@ extern "C" void kmain(void) {
   }
 
   // bring up devices
-  if (dtb_request.response) {
+  if (dtb_request.response != nullptr) {
     kputs("got dtb response!\n");
   } else {
     kputs("failed to get dtb response\n");
@@ -47,5 +47,13 @@ extern "C" void kmain(void) {
   // switch to user
 
   kputs("hello world\n");
+
+  kputs("trying malloc\n");
+
+  int *a = new int;
+  *a = 10;
+  if (*a == 10) { 
+    kputs("malloc worked!");
+  }
   hcf();
 }
