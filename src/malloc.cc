@@ -36,8 +36,6 @@ void* kmalloc(size_t size_) {
   size_t size = ((size_ + HEAP_AL - 1) / HEAP_AL) * HEAP_AL; // Round up to the nearest multiple of HEAP_AL
   free_list_header *current = reinterpret_cast<free_list_header*>(heap);
   while(current < reinterpret_cast<free_list_header*>(heap) + HEAP_SIZE) {
-    // find the first aligned address within this block 
-    // current design deals with alignment requirements by just wasting the first part of any block wr find
     size_t base_addr = (size_t) current + sizeof(free_list_header);
     if (current->used || (size > current->size - sizeof(free_list_header) - sizeof(free_list_footer))) {
       current = current + current->size; // Move to the next header
@@ -69,24 +67,48 @@ void* kmalloc(size_t size_) {
 }
 
 // TODO: currently this silently fails on ptrs not returned by kmalloc inside the heap region
-// TODO: currently not coalescing
+/**
+ * Frees a block from the kernel heap
+ * ONLY VALID FOR SINGLE CORE
+ * @param ptr   The address of the block to free, as returned exactly by kmalloc
+ */
 void kfree(void *ptr) {
-  // find the block that fully contains this pointer 
-  free_list_header *current = reinterpret_cast<free_list_header*>(heap);
-  size_t ptr_addr = reinterpret_cast<size_t>(ptr);
-  while(current < reinterpret_cast<free_list_header*>(heap) + HEAP_SIZE) {
-    size_t curr_addr = reinterpret_cast<size_t>(current);
-    if (curr_addr < ptr_addr && ptr_addr < curr_addr + current->size) {
-      if (current->used) { 
-        current->used = false;
-        return;
-      } else {
-        // TODO: panic, we just had a double free
-        return;
-      }
-    } 
+
+  if (ptr < reinterpret_cast<void*>(heap) || ptr >= reinterpret_cast<void*>(heap + HEAP_SIZE)) {
+    // TODO: Panic on out of bounds free
+    return;
   }
-  // TODO: panic, invalid free
+
+  free_list_header* current = reinterpret_cast<free_list_header*>(ptr - sizeof(free_list_header));
+  free_list_footer* current_footer = reinterpret_cast<free_list_footer*>(current + current->size - sizeof(free_list_footer));
+  free_list_header* right = reinterpret_cast<free_list_header*>(current + current->size);
+  free_list_footer* right_footer = reinterpret_cast<free_list_footer*>(right + right->size - sizeof(free_list_footer));
+  free_list_footer* left_footer = reinterpret_cast<free_list_footer*>(current - sizeof(free_list_footer));
+  free_list_header* left = reinterpret_cast<free_list_header*>(current - left_footer->size);
+
+  // Free the current mallocced block
+  if (current->used == false) {
+    // TODO: Panic on double free
+    return;
+  }
+  current->used = true;
+
+  // Check right neighbor: is it also free?
+  if (right->used == false) {
+    // Coalesce
+    size_t total_current_and_right = current->size + right->size;
+    current->size = total_current_and_right;
+    right_footer->size = total_current_and_right;
+    current_footer = right_footer;
+  }
+
+  // Check left neighbor: is it also free?
+  if (left->used == false) {
+    // Coalesce
+    size_t total_left_and_current = left->size + current->size;
+    left->size = total_left_and_current;
+    current_footer->size = total_left_and_current;
+  }
 }
 
 void* operand new(std::size_t count) {
