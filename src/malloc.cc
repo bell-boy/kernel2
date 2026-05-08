@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "kio.h"
-#include "kprintf.h"
+#include "debug.h"
 
 #define HEAP_SIZE 8 * 1024 * 1024
 #define HEAP_AL 16
@@ -60,11 +60,12 @@ void* kmalloc(size_t size_) {
       post->used = false;
       // Update the post footer
       free_list_footer *post_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(post) + post->size - sizeof(free_list_footer));
+      ASSERT(post_footer->size == old_size);
       post_footer->size = post->size;
     }
     return reinterpret_cast<void*>(base_addr);
   }
-  // TODO: We need a kernel panic here
+  KPANIC("Out of Kernel Heap Space");
   return nullptr;
 }
 
@@ -77,7 +78,7 @@ void* kmalloc(size_t size_) {
 void kfree(void *ptr) {
 
   if (ptr < reinterpret_cast<void*>(heap) || ptr >= reinterpret_cast<void*>(heap + HEAP_SIZE)) {
-    // TODO: Panic on out of bounds free
+    KPANIC("Tried to free something not in the kernel heap");
     return;
   }
 
@@ -87,17 +88,20 @@ void kfree(void *ptr) {
   free_list_footer* right_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(right) + right->size - sizeof(free_list_footer));
   free_list_footer* left_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(current) - sizeof(free_list_footer));
   free_list_header* left = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(current) - left_footer->size);
+  
+  ASSERT(current->size == current_footer->size);
 
   // Free the current mallocced block
   if (current->used == false) {
-    // TODO: Panic on double free
+    KPANIC("Double Free detected in Kernel Heap");
     return;
   }
   current->used = true;
 
   // Check right neighbor: is it also free?
-  if (right->used == false) {
+  if (right < reinterpret_cast<void*>(heap + HEAP_SIZE) && right->used == false) {
     // Coalesce
+    ASSERT(right->size == right_footer->size);
     size_t total_current_and_right = current->size + right->size;
     current->size = total_current_and_right;
     right_footer->size = total_current_and_right;
@@ -105,8 +109,9 @@ void kfree(void *ptr) {
   }
 
   // Check left neighbor: is it also free?
-  if (left->used == false) {
+  if (left >= reinterpret_cast<void*>(heap) && left->used == false) {
     // Coalesce
+    ASSERT(left->size == left_footer->size);
     size_t total_left_and_current = left->size + current->size;
     left->size = total_left_and_current;
     current_footer->size = total_left_and_current;
