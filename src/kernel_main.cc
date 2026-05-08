@@ -35,8 +35,9 @@ static void hcf(void) {
 extern "C" void kmain(void) {
   kprintf("Entering kmain...\n");
   if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
-    kputs("Kernel base revision not supported.\n");
-    hcf();
+    kprintf("[WARN] Kernel base revision not supported.\n");
+    kexit(1);
+    // hcf();
   }
 
   if (dtb_request.response != nullptr) {
