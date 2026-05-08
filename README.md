@@ -26,6 +26,18 @@ uv run buildtool qemu
 
 Note the buildtool uses clang + ld.lld, so make sure you have these installed! 
 
+## Integration Testing
+
+To run a single integration test, run
+```bash
+uv run buildtool test [TEST_NAME]
+```
+
+To run all integration tests, run
+```bash
+uv run buildtool test-all
+```
+
 ## TODO:
 - [ ] get to user mode:
     - [ ] be able to load programs into memory from disk
