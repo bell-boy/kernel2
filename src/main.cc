@@ -2,6 +2,9 @@
 #include <stddef.h>
 #include <limine.h>
 #include <kio.h>
+#include <kprintf.h>
+
+extern void init_malloc();
 
 __attribute__((used, section(".limine_requests")))
 static volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(6);
@@ -48,12 +51,15 @@ extern "C" void kmain(void) {
 
   kputs("hello world\n");
 
+  init_malloc();
   kputs("trying malloc\n");
 
   int *a = new int;
   *a = 10;
   if (*a == 10) { 
-    kputs("malloc worked!");
+    kputs("malloc worked!\n");
   }
+  delete a;
+  kputs("free worked!\n");
   hcf();
 }

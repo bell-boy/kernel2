@@ -1,10 +1,12 @@
 #include <stdint.h>
 #include <stddef.h>
+#include "kio.h"
+#include "kprintf.h"
 
 #define HEAP_SIZE 8 * 1024 * 1024
 #define HEAP_AL 16
 
-char heap[HEAP_SIZE];
+alignas(HEAP_AL) char heap[HEAP_SIZE];
 
 struct alignas(HEAP_AL) free_list_header {
   size_t size; // Includes the size of the header and footer
@@ -35,10 +37,10 @@ void init_malloc() {
 void* kmalloc(size_t size_) {
   size_t size = ((size_ + HEAP_AL - 1) / HEAP_AL) * HEAP_AL; // Round up to the nearest multiple of HEAP_AL
   free_list_header *current = reinterpret_cast<free_list_header*>(heap);
-  while(current < reinterpret_cast<free_list_header*>(heap) + HEAP_SIZE) {
+  while(current < reinterpret_cast<free_list_header*>(heap + HEAP_SIZE)) {
     size_t base_addr = (size_t) current + sizeof(free_list_header);
     if (current->used || (size > current->size - sizeof(free_list_header) - sizeof(free_list_footer))) {
-      current = current + current->size; // Move to the next header
+      current = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(current) + current->size);
       continue;
     }
     // First-fit policy
@@ -50,14 +52,14 @@ void* kmalloc(size_t size_) {
       size_t old_size = current->size;
       current->size = sizeof(free_list_header) + size + sizeof(free_list_footer);
       // Update the footer
-      free_list_footer *current_footer = reinterpret_cast<free_list_footer*>(current + current->size - sizeof(free_list_footer));
+      free_list_footer *current_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(current) + current->size - sizeof(free_list_footer));
       current_footer->size = current->size;
       // Add the new free block
-      free_list_header *post = reinterpret_cast<free_list_header*>(current + current->size); 
+      free_list_header *post = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(current) + current->size);
       post->size = old_size - current->size;
       post->used = false;
       // Update the post footer
-      free_list_footer *post_footer = reinterpret_cast<free_list_footer*>(post + post->size - sizeof(free_list_footer));
+      free_list_footer *post_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(post) + post->size - sizeof(free_list_footer));
       post_footer->size = post->size;
     }
     return reinterpret_cast<void*>(base_addr);
@@ -79,12 +81,12 @@ void kfree(void *ptr) {
     return;
   }
 
-  free_list_header* current = reinterpret_cast<free_list_header*>(ptr - sizeof(free_list_header));
-  free_list_footer* current_footer = reinterpret_cast<free_list_footer*>(current + current->size - sizeof(free_list_footer));
-  free_list_header* right = reinterpret_cast<free_list_header*>(current + current->size);
-  free_list_footer* right_footer = reinterpret_cast<free_list_footer*>(right + right->size - sizeof(free_list_footer));
-  free_list_footer* left_footer = reinterpret_cast<free_list_footer*>(current - sizeof(free_list_footer));
-  free_list_header* left = reinterpret_cast<free_list_header*>(current - left_footer->size);
+  free_list_header* current = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(ptr) - sizeof(free_list_header));
+  free_list_footer* current_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(current) + current->size - sizeof(free_list_footer));
+  free_list_header* right = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(current) + current->size);
+  free_list_footer* right_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(right) + right->size - sizeof(free_list_footer));
+  free_list_footer* left_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(current) - sizeof(free_list_footer));
+  free_list_header* left = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(current) - left_footer->size);
 
   // Free the current mallocced block
   if (current->used == false) {
@@ -111,37 +113,19 @@ void kfree(void *ptr) {
   }
 }
 
-void* operand new(std::size_t count) {
-  return kmalloc(count, 16);
+void* operator new(size_t count) {
+  return kmalloc(count);
 }
 
-void* operand new[](std::size_t count) {
-  return kmalloc(count, 16);
+void* operator new[](size_t count) {
+  return kmalloc(count);
 }
-
-
-void* operand new(std::size_t count, std::align_val_t al) {
-  return kmalloc(count, static_cast<size_t>(al));
-}
-
-void* operand new[](std::size_t count, std::align_val_t al) {
-  return kmalloc(count, static_cast<size_t>(al));
-}
-// scalar delete
 
 void operator delete(void* p) noexcept {
   kfree(p);
 }
 
 void operator delete(void* p, size_t n) noexcept {
-  kfree(p);
-}
-
-void operator delete(void* p, std::align_val_t a) noexcept {
-  kfree(p);
-}
-
-void operator delete(void* p, size_t n, std::align_val_t a) noexcept {
   kfree(p);
 }
 
@@ -152,13 +136,5 @@ void operator delete[](void* p) noexcept {
 }
 
 void operator delete[](void* p, size_t n) noexcept {
-  kfree(p);
-}
-
-void operator delete[](void* p, std::align_val_t a) noexcept {
-  kfree(p);
-}
-
-void operator delete[](void* p, size_t n, std::align_val_t a) noexcept {
   kfree(p);
 }
