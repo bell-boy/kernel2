@@ -143,9 +143,9 @@ def qemu():
         "-semihosting-config", "enable=on,target=native"
     ], check=True, text=True)
 
-# kernel_main.cc provides the default main(); exclude it when building tests
+# main.cc provides the default main(); exclude it when building tests
 # so each test file can supply its own main() instead.
-_KERNEL_MAIN = os.path.normpath("src/kernel_main.cc")
+_KERNEL_MAIN = os.path.normpath("src/main.cc")
 
 def _build_test_image(name: str, test_file: str) -> str:
     """Compile test_file alongside src/ (minus kernel_main.cc), return disk image path."""

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "debug.h"
+#include "kio.h"
 
 #define HEAP_SIZE 8 * 1024 * 1024
 #define HEAP_AL 16
@@ -84,9 +85,7 @@ void kfree(void *ptr) {
   free_list_header* current = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(ptr) - sizeof(free_list_header));
   free_list_footer* current_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(current) + current->size - sizeof(free_list_footer));
   free_list_header* right = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(current) + current->size);
-  free_list_footer* right_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(right) + right->size - sizeof(free_list_footer));
   free_list_footer* left_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(current) - sizeof(free_list_footer));
-  free_list_header* left = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(current) - left_footer->size);
   
   ASSERT(current->size == current_footer->size);
 
@@ -95,10 +94,11 @@ void kfree(void *ptr) {
     KPANIC("Double Free detected in Kernel Heap");
     return;
   }
-  current->used = true;
+  current->used = false;
 
   // Check right neighbor: is it also free?
   if (right < reinterpret_cast<void*>(heap + HEAP_SIZE) && right->used == false) {
+    free_list_footer* right_footer = reinterpret_cast<free_list_footer*>(reinterpret_cast<char*>(right) + right->size - sizeof(free_list_footer));
     // Coalesce
     ASSERT(right->size == right_footer->size);
     size_t total_current_and_right = current->size + right->size;
@@ -108,12 +108,15 @@ void kfree(void *ptr) {
   }
 
   // Check left neighbor: is it also free?
-  if (left >= reinterpret_cast<void*>(heap) && left->used == false) {
-    // Coalesce
-    ASSERT(left->size == left_footer->size);
-    size_t total_left_and_current = left->size + current->size;
-    left->size = total_left_and_current;
-    current_footer->size = total_left_and_current;
+  if (left_footer >= reinterpret_cast<void*>(heap)) {
+    free_list_header* left = reinterpret_cast<free_list_header*>(reinterpret_cast<char*>(current) - left_footer->size);
+    if (left->used == false) {
+      // Coalesce
+      ASSERT(left->size == left_footer->size);
+      size_t total_left_and_current = left->size + current->size;
+      left->size = total_left_and_current;
+      current_footer->size = total_left_and_current;
+    }
   }
 }
 

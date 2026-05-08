@@ -11,4 +11,13 @@ extern "C" void main() {
   }
   delete a;
   kprintf("Kernel Free Works!\n");
+
+  // Again
+  int *b = new int;
+  *b = 15;
+  if (*b == 15) {
+    kprintf("Kernel Malloc Works!\n");
+  }
+  delete b;
+  kprintf("Kernel Free Works!\n");
 }
