@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stddef.h>
-#include "kio.h"
 #include "debug.h"
 
 #define HEAP_SIZE 8 * 1024 * 1024
@@ -18,7 +17,7 @@ struct alignas(HEAP_AL) free_list_footer {
 };
 
 // Does not include the size of the header or footer
-const size_t MIN_FREE_BLOCK_SIZE_DATA = sizeof(free_list_header);
+const size_t MIN_FREE_BLOCK_SIZE_DATA = HEAP_AL;
 
 void init_malloc() {
   free_list_header* first_header = reinterpret_cast<free_list_header*>(heap);
