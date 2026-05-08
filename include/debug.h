@@ -1,15 +1,26 @@
 #pragma once
 
 #include <kio.h>
+#include <stdint.h>
 
 #define _STRINGIFY(x) #x
 #define _TOSTR(x)     _STRINGIFY(x)
 
-// Halt and catch fire — used by panic/assert.
+// Exit QEMU via AArch64 semihosting SYS_EXIT.
 [[noreturn]] static inline void _khcf(void) {
-    for (;;) {
-        __asm__ volatile("wfi");
-    }
+    volatile uint64_t block[2] = {
+        0x20026ULL,  // ADP_Stopped_ApplicationExit
+        1ULL         // exit code 1 — abnormal termination
+    };
+    __asm__ volatile (
+        "mov x0, #0x18\n\t"
+        "mov x1, %0\n\t"
+        "hlt #0xf000"
+        :
+        : "r"((volatile uint64_t *)block)
+        : "x0", "x1", "memory"
+    );
+    __builtin_unreachable();
 }
 
 // KPANIC(msg) — print a message and halt.
