@@ -8,25 +8,29 @@ char heap[HEAP_SIZE];
 struct free_list_header {
   size_t size; // includes the size of the header
   bool used;
-}
+};
 
 void init_malloc() {
-  free_list_header* first_header = heap;
+  free_list_header* first_header = reinterpret_cast<free_list_header*>(heap);
   first_header->size = HEAP_SIZE;
   first_header->used = false;
 }
 
-
+/**
+ * Allocates a specified number of bytes for kernel use, aligned to a specified amount of bytes.
+ * @param size      The number of bytes to allocate within the kernel heap
+ * @param al        The number of bytes to align the returned address to.
+ * @returns         A pointer to an allocated region of the kernel heap. (Guaranteed to be divisible by al)
+ */
 void* kmalloc(size_t size, size_t al) {
-  // find a free block aligned to size with the size of size
-  free_list_header *current = heap;
-  while(current < heap + HEAP_SIZE) {
+  free_list_header *current = reinterpret_cast<free_list_header*>(heap);
+  while(current < reinterpret_cast<free_list_header*>(heap) + HEAP_SIZE) {
     // find the first aligned address within this block 
     // current design deals with alignment requirements by just wasting the first part of any block wr find
     size_t base_addr = (size_t) current + sizeof(free_list_header);
     size_t al_offset = al - (base_addr % al);
-    if (al_offset + size > current->size - sizeof(free_list_header) || current->used) {
-      current = base_addr + free_list_header->size;
+    if ((al_offset + size > current->size - sizeof(free_list_header)) || current->used) {
+      current = current + current->size;
       continue;
     }
     // we've found it, carve out the region then return this addr
@@ -34,11 +38,12 @@ void* kmalloc(size_t size, size_t al) {
     size_t old_size = current->size;
     current->size = al_offset + size + sizeof(free_list_header); 
     current->used = true;
-    free_list_header *post = (size_t) current + current->size; 
+    free_list_header *post = reinterpret_cast<free_list_header*>(current + current->size); 
     post->size = old_size - current->size;
     post->used = false;
-    return aligned_addr;
+    return reinterpret_cast<void*>(aligned_addr);
   }
+  // TODO: We need a kernel panic here
   return nullptr;
 }
 
@@ -46,10 +51,10 @@ void* kmalloc(size_t size, size_t al) {
 // TODO: currently not coalescing
 void kfree(void *ptr) {
   // find the block that fully contains this pointer 
-  free_list_header *current = heap;
-  size_t ptr_addr = ptr;
-  while(current < heap + HEAP_SIZE) {
-    size_t curr_addr = current;
+  free_list_header *current = reinterpret_cast<free_list_header*>(heap);
+  size_t ptr_addr = reinterpret_cast<size_t>(ptr);
+  while(current < reinterpret_cast<free_list_header*>(heap) + HEAP_SIZE) {
+    size_t curr_addr = reinterpret_cast<size_t>(current);
     if (curr_addr < ptr_addr && ptr_addr < curr_addr + current->size) {
       if (current->used) { 
         current->used = false;
