@@ -10,6 +10,8 @@ struct free_list_header {
   bool used;
 };
 
+const size_t MIN_FREE_BLOCK_SIZE_DATA = 2*sizeof(free_list_header); // Does not include the size of the header
+
 void init_malloc() {
   free_list_header* first_header = reinterpret_cast<free_list_header*>(heap);
   first_header->size = HEAP_SIZE;
@@ -18,6 +20,7 @@ void init_malloc() {
 
 /**
  * Allocates a specified number of bytes for kernel use, aligned to a specified amount of bytes.
+ * ONLY VALID FOR SINGLE CORE
  * @param size      The number of bytes to allocate within the kernel heap
  * @param al        The number of bytes to align the returned address to.
  * @returns         A pointer to an allocated region of the kernel heap. (Guaranteed to be divisible by al)
@@ -29,18 +32,23 @@ void* kmalloc(size_t size, size_t al) {
     // current design deals with alignment requirements by just wasting the first part of any block wr find
     size_t base_addr = (size_t) current + sizeof(free_list_header);
     size_t al_offset = al - (base_addr % al);
-    if ((al_offset + size > current->size - sizeof(free_list_header)) || current->used) {
-      current = current + current->size;
+    if (current->used || (al_offset + size > current->size - sizeof(free_list_header))) {
+      current = current + current->size; // Move to the next header
       continue;
     }
-    // we've found it, carve out the region then return this addr
+    // First-fit policy, carve out this region and mark it as used
     size_t aligned_addr = base_addr + al_offset;
     size_t old_size = current->size;
-    current->size = al_offset + size + sizeof(free_list_header); 
     current->used = true;
-    free_list_header *post = reinterpret_cast<free_list_header*>(current + current->size); 
-    post->size = old_size - current->size;
-    post->used = false;
+
+    // Check if there is enough room to make a new free list block
+    if (old_size - (sizeof(free_list_header) + al_offset + size) > sizeof(free_list_header) + MIN_FREE_BLOCK_SIZE_DATA) {
+      // Insert a new free list header
+      current->size = sizeof(free_list_header) + al_offset + size; // Carve out reserved portion
+      free_list_header *post = reinterpret_cast<free_list_header*>(current + current->size); 
+      post->size = old_size - current->size;
+      post->used = false;
+    }
     return reinterpret_cast<void*>(aligned_addr);
   }
   // TODO: We need a kernel panic here
