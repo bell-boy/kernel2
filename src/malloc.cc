@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
-#include "debug.h"
-#include "kio.h"
+#include <kstdlib/debug.h>
 
 #define HEAP_SIZE 8 * 1024 * 1024
 #define HEAP_AL 16

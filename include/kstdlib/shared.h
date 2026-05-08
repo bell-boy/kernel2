@@ -1,3 +1,5 @@
+namespace kstd {
+
 template<typename T>
 class SharedPtr {
     T* ptr_;
@@ -28,3 +30,5 @@ public:
         return ptr_;
     }
 };
+
+}

@@ -1,4 +1,6 @@
-#include <shared.h>
+#include <kstdlib/shared.h>
+
+namespace kstd {
 
 template<typename T>
 class List;
@@ -47,3 +49,5 @@ public:
         return tail_;
     }
 };
+
+}

@@ -1,10 +1,10 @@
-#include "kio.h"
+#include <kstdlib/kio.h>
 
 extern "C" void main() {
     // Basic Malloc/Free
     int* a = new int;
     *a = 42;
-    if (*a != 42) { kprintf("FAILED: basic malloc\n"); return; }
+    if (*a != 42) { kstd::kprintf("FAILED: basic malloc\n"); return; }
     delete a;
 
     // Multiple Mallocs
@@ -15,7 +15,7 @@ extern "C" void main() {
         *arr[i] = i * 7;
     }
     for (int i = 0; i < N; i++) {
-        if (*arr[i] != i * 7) { kprintf("FAILED: multiple mallocs\n"); return; }
+        if (*arr[i] != i * 7) { kstd::kprintf("FAILED: multiple mallocs\n"); return; }
         delete arr[i];
     }
 
@@ -25,7 +25,7 @@ extern "C" void main() {
     delete b;
     int* c = new int;
     *c = 100;
-    if (*c != 100) { kprintf("FAILED: malloc after free\n"); return; }
+    if (*c != 100) { kstd::kprintf("FAILED: malloc after free\n"); return; }
     delete c;
 
     // Malloc Entire Heap
@@ -33,8 +33,8 @@ extern "C" void main() {
     delete[] heap;
     int* d = new int;
     *d = 101;
-    if (*d != 101) { kprintf("FAILED: malloc entire heap\n"); return; }
+    if (*d != 101) { kstd::kprintf("FAILED: malloc entire heap\n"); return; }
     delete d;
 
-    kprintf("PASSED\n");
+    kstd::kprintf("PASSED\n");
 }
