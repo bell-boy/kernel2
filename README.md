@@ -32,7 +32,7 @@ Note the buildtool uses clang + ld.lld, so make sure you have these installed!
         - [ ] disk driver
             - [ ] parse the device tree
                 - [ ] create a linked-list data-strcture
-                    - [ ] get allocation working (in-progress)
+                    - [x] get allocation working 
             - [ ] do driver discovery 
             - [ ] write virtio-disk driver
                 - [ ] handle interrupts
