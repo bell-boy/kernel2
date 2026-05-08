@@ -2,6 +2,23 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+
+[[noreturn]] void kexit(int code) {
+    volatile uint64_t block[2] = {
+        0x20026ULL,               // ADP_Stopped_ApplicationExit
+        (uint64_t)(unsigned)code
+    };
+    asm volatile (
+        "mov x0, #0x18\n\t"      // SYS_EXIT
+        "mov x1, %0\n\t"
+        "hlt #0xf000"
+        :
+        : "r"((volatile uint64_t *)block)
+        : "x0", "x1", "memory"
+    );
+    __builtin_unreachable();
+}
+
 void kputs(const char *str) {
     // AArch64 semihosting: x0 = SYS_WRITE0 (0x04), x1 = str
     asm volatile (

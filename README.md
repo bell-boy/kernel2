@@ -38,6 +38,8 @@ To run all integration tests, run
 uv run buildtool test-all
 ```
 
+The results of testcases can be viewed in `build/integration_tests`.
+
 ## TODO:
 - [ ] get to user mode:
     - [ ] be able to load programs into memory from disk

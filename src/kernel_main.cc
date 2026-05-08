@@ -50,5 +50,6 @@ extern "C" void kmain(void) {
   kputs("Initialized Kernel Heap.\n");
 
   main();
-  hcf();
+  kexit(0);
+  // hcf();
 }
