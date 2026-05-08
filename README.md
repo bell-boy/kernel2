@@ -2,9 +2,25 @@
 
 THIS time is different trust
 
+## Installation Instructions
+
+`uv` is a fast, single-tool package manager.
+To install `uv`, run
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+`clang` is our C++ compiler of choice.
+`lld` is our linker of choice.
+`qemu-system-arm` is our emulator of choice. Note that we are targeting the ARM ISA.
+To install these tools, run
+```bash
+sudo apt install clang lld qemu-system-arm
+```
+
 to build + run qemu
 
-```python
+```bash
 uv run buildtool qemu
 ```
 
