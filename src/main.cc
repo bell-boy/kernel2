@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <limine.h>
-#include <kio.h>
+#include "kio.h"
+
+extern void init_malloc();
 
 __attribute__((used, section(".limine_requests")))
 static volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(6);
@@ -31,29 +33,33 @@ static void hcf(void) {
 // If renaming kmain() to something else, make sure to change the
 // linker script accordingly.
 extern "C" void kmain(void) {
-  kputs("kernel starting\n");
+  kprintf("Entering kmain...\n");
   if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
-    kputs("kernel base revision not supported\n");
+    kputs("Kernel base revision not supported.\n");
     hcf();
   }
 
   // bring up devices
   if (dtb_request.response != nullptr) {
-    kputs("got dtb response!\n");
+    kputs("Found Device Tree Blob.\n");
   } else {
-    kputs("failed to get dtb response\n");
+    kputs("[WARN] Failed to get Device Tree Blob.\n");
   }
   // load the entry point
   // switch to user
 
-  kputs("hello world\n");
+  kprintf("Hello, World!\n");
 
-  kputs("trying malloc\n");
+  kprintf("Initializing Kernel Heap...\n");
+  init_malloc();
+  kputs("Initialized Kernel Heap.\n");
 
   int *a = new int;
   *a = 10;
   if (*a == 10) { 
-    kputs("malloc worked!");
+    kprintf("Kernel Malloc Works!\n");
   }
+  delete a;
+  kprintf("Kernel Free Works!\n");
   hcf();
 }
