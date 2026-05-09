@@ -8,26 +8,7 @@ from fs import open_fs
 from pyfatfs.PyFat import PyFat
 import argparse
 
-CXXFLAGS = [
-    "--target=aarch64-none-elf",
-    "-Wall",
-    "-Wextra",
-    "-std=c++23",
-    "-ffreestanding",
-    "-fno-stack-protector",
-    "-fno-stack-check",
-    "-fno-lto",
-    "-fno-PIC",
-    "-fno-exceptions",
-    "-fno-rtti",
-    "-fno-use-cxa-atexit",
-    "-ffunction-sections",
-    "-fdata-sections",
-    "-march=armv8-a",
-    "-mgeneral-regs-only",
-    "-mstrict-align",
-    "-Iinclude",
-]
+COMPILE_FLAGS_PATH = "compile_flags.txt"
 
 LDFLAGS = [
     "-nostdlib",
@@ -75,7 +56,7 @@ def _create_object_files(source_files: List[str]) -> List[str]:
         output_path = os.path.join("build", filename + ".o")
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         result = subprocess.run(
-            ["clang++", *CXXFLAGS, "-c", file, "-o", output_path],
+            ["clang++", f"@{COMPILE_FLAGS_PATH}", "-c", file, "-o", output_path],
             capture_output=True, text=True
         )
         if result.returncode != 0:
@@ -162,11 +143,14 @@ def _build_test_image(name: str, test_file: str) -> str:
 
 def _run_test_image(img_path: str) -> tuple[bool, str]:
     """Boot a disk image in QEMU. Returns (timed_out, output)."""
+    name = os.path.splitext(img_path)[0]
     proc = subprocess.Popen([
         "qemu-system-aarch64",
         "-machine", "virt,acpi=off",
         "-cpu", "cortex-a72",
         "-smp", "1",
+        "-D", f"{name}.qlog",
+        "-d", "int,guest_errors",
         "-m", "512M",
         "-bios", "bin/QEMU_EFI.fd",
         "-drive", f"if=none,file={img_path},format=raw,id=hd0",

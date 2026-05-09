@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
-#include "debug.h"
-#include "kio.h"
+#include <kstdlib/debug.h>
 
 #define HEAP_SIZE 8 * 1024 * 1024
 #define HEAP_AL 16
@@ -132,7 +131,7 @@ void operator delete(void* p) noexcept {
   kfree(p);
 }
 
-void operator delete(void* p, size_t n) noexcept {
+void operator delete(void* p, [[maybe_unused]] size_t n) noexcept {
   kfree(p);
 }
 
@@ -142,6 +141,6 @@ void operator delete[](void* p) noexcept {
   kfree(p);
 }
 
-void operator delete[](void* p, size_t n) noexcept {
+void operator delete[](void* p, [[maybe_unused]] size_t n) noexcept {
   kfree(p);
 }

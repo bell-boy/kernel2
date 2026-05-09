@@ -46,7 +46,7 @@ The results of testcases can be viewed in `build/integration_tests`.
         - [ ] disk driver
             - [ ] parse the device tree
                 - [ ] create a linked-list data-strcture
-                    - [ ] get allocation working (in-progress)
+                    - [x] get allocation working 
             - [ ] do driver discovery 
             - [ ] write virtio-disk driver
                 - [ ] handle interrupts

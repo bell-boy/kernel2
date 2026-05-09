@@ -1,8 +1,8 @@
-#include "kio.h"
+#include <kstdlib/kio.h>
 
 /**
  * This is when running the kernel in non-test mode
  */
 extern "C" void main() {
-  kprintf("Hello, World!\n");
+  kstd::kprintf("Hello, World!\n");
 }

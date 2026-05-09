@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <limine.h>
-#include "kio.h"
+#include <kstdlib/kio.h>
 
 extern void init_malloc();
 extern "C" void main();
@@ -23,34 +23,26 @@ __attribute__((used, section(".limine_requests_end")))
 static volatile uint64_t limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
 
 
-static void hcf(void) {
-    for (;;) {
-      __asm__ volatile ("wfi");
-    }
-}
-
 // The following will be our kernel's entry point.
 // If renaming kmain() to something else, make sure to change the
 // linker script accordingly.
 extern "C" void kmain(void) {
-  kprintf("Entering kmain...\n");
+  kstd::kprintf("Entering kmain...\n");
   if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
-    kprintf("[WARN] Kernel base revision not supported.\n");
-    kexit(1);
-    // hcf();
+    kstd::kprintf("[WARN] Kernel base revision not supported.\n");
+    kstd::kexit(1);
   }
 
   if (dtb_request.response != nullptr) {
-    kputs("Found Device Tree Blob.\n");
+    kstd::kputs("Found Device Tree Blob.\n");
   } else {
-    kputs("[WARN] Failed to get Device Tree Blob.\n");
+    kstd::kputs("[WARN] Failed to get Device Tree Blob.\n");
   }
 
-  kprintf("Initializing Kernel Heap...\n");
+  kstd::kprintf("Initializing Kernel Heap...\n");
   init_malloc();
-  kputs("Initialized Kernel Heap.\n");
+  kstd::kputs("Initialized Kernel Heap.\n");
 
   main();
-  kexit(0);
-  // hcf();
+  kstd::kexit(0);
 }

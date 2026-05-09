@@ -1,7 +1,9 @@
-#include <kio.h>
+#include <kstdlib/kio.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+
+namespace kstd {
 
 [[noreturn]] void kexit(int code) {
     volatile uint64_t block[2] = {
@@ -74,3 +76,5 @@ void kprintf(const char* fmt, ...) {
 
     va_end(args);
 }
+
+} // namespace kstd
