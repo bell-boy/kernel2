@@ -2,6 +2,7 @@
 --target=aarch64-none-elf
 -Wall
 -Wextra
+-Werror
 -std=c++23
 -ffreestanding
 -fno-stack-protector

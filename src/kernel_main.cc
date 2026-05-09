@@ -23,12 +23,6 @@ __attribute__((used, section(".limine_requests_end")))
 static volatile uint64_t limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
 
 
-static void hcf(void) {
-    for (;;) {
-      __asm__ volatile ("wfi");
-    }
-}
-
 // The following will be our kernel's entry point.
 // If renaming kmain() to something else, make sure to change the
 // linker script accordingly.
@@ -37,7 +31,6 @@ extern "C" void kmain(void) {
   if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
     kstd::kprintf("[WARN] Kernel base revision not supported.\n");
     kstd::kexit(1);
-    // hcf();
   }
 
   if (dtb_request.response != nullptr) {
@@ -52,5 +45,4 @@ extern "C" void kmain(void) {
 
   main();
   kstd::kexit(0);
-  // hcf();
 }

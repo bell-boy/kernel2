@@ -131,7 +131,7 @@ void operator delete(void* p) noexcept {
   kfree(p);
 }
 
-void operator delete(void* p, size_t n) noexcept {
+void operator delete(void* p, [[maybe_unused]] size_t n) noexcept {
   kfree(p);
 }
 
@@ -141,6 +141,6 @@ void operator delete[](void* p) noexcept {
   kfree(p);
 }
 
-void operator delete[](void* p, size_t n) noexcept {
+void operator delete[](void* p, [[maybe_unused]] size_t n) noexcept {
   kfree(p);
 }

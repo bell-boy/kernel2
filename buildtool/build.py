@@ -143,11 +143,14 @@ def _build_test_image(name: str, test_file: str) -> str:
 
 def _run_test_image(img_path: str) -> tuple[bool, str]:
     """Boot a disk image in QEMU. Returns (timed_out, output)."""
+    name = os.path.splitext(img_path)[0]
     proc = subprocess.Popen([
         "qemu-system-aarch64",
         "-machine", "virt,acpi=off",
         "-cpu", "cortex-a72",
         "-smp", "1",
+        "-D", f"{name}.qlog",
+        "-d", "int,guest_errors",
         "-m", "512M",
         "-bios", "bin/QEMU_EFI.fd",
         "-drive", f"if=none,file={img_path},format=raw,id=hd0",
