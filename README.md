@@ -44,8 +44,8 @@ The results of testcases can be viewed in `build/integration_tests`.
 - [ ] get to user mode:
     - [ ] be able to load programs into memory from disk
         - [ ] disk driver
-            - [ ] parse the device tree
-                - [ ] create a linked-list data-strcture
+            - [x] parse the device tree
+                - [x] create a linked-list data-strcture
                     - [x] get allocation working 
             - [ ] do driver discovery 
             - [ ] write virtio-disk driver
