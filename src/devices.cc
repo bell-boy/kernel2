@@ -128,18 +128,18 @@ void Node::dump(int level) {
     prefix[level] = '\0';
     kprintf("%s Node: %s\n%s Properties:\n", prefix, name_, prefix);
     auto currp = properties_.head();
-    while (currp != nullptr) {
-        kprintf("%s- %s\n", prefix, currp->val.name);
-        currp = currp->next;
+    while (currp) {
+        kprintf("%s- %s\n", prefix, currp->name);
+        currp = currp.next();
     }
     auto currn = children_.head();
     kprintf("%s Children:\n",prefix);
-    if (currn == nullptr) {
+    if (!currn) {
         kprintf("%s- None\n", prefix);
     }
-    while(currn != nullptr) {
-        currn->val.dump(level + 1);
-        currn = currn->next;
+    while(currn) {
+        currn->dump(level + 1);
+        currn = currn.next();
     }
 
 }

@@ -35,14 +35,17 @@ public:
         ref_count_ = other.ref_count_;
         return *this;
     }
-    T* operator->() const {
+    T* get() const {
         return ptr_;
+    }
+    T* operator->() const {
+        return get();
     }
     bool operator==(const T* ptr) const {
         return ptr == ptr_;
     }
     bool operator==(const SharedPtr<T> &ptr) const {
-        return ptr.ptr_ == ptr;
+        return ptr_ == ptr.ptr_;
     }
     T& operator*() {
         if (ptr_ == nullptr) KPANIC("Tried to dereference shared nullptr");
