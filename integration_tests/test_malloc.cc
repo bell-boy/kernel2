@@ -1,6 +1,6 @@
-#include <kstdlib/kio.h>
+#include <kstdlib/testing.h>
 
-extern "C" void main() {
+TEST_MAIN({
     // Basic Malloc/Free
     int* a = new int;
     *a = 42;
@@ -37,4 +37,4 @@ extern "C" void main() {
     delete d;
 
     kstd::kprintf("PASSED\n");
-}
+})
