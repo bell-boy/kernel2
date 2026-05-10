@@ -4,5 +4,3 @@ build/
 *.swp
 .DS_STORE
 .zed/
-.venv/
-qemu.log

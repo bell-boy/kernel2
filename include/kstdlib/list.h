@@ -1,89 +1,52 @@
-#pragma once
 #include <kstdlib/shared.h>
 
 namespace kstd {
 
 template<typename T>
+class List;
+
+template<typename T>
+struct ListNode {
+    SharedPtr<ListNode<T>> next;
+    SharedPtr<ListNode<T>> prev;
+    T val;
+};
+
+template<typename T>
 class List {
-    struct Entry {
-        T value;
-        SharedPtr<Entry> next;
-        Entry* prev;
-
-        Entry(T value) : value(value), next(nullptr), prev(nullptr) {}
-    };
-
-    SharedPtr<Entry> head_;
-    Entry* tail_;
-
+    SharedPtr<ListNode<T>> head_;
+    SharedPtr<ListNode<T>> tail_;
 public:
-    class Iterator {
-        friend class List<T>;
-
-        Entry* entry_;
-
-        explicit Iterator(Entry* entry) : entry_(entry) {}
-
-    public:
-        Iterator() : entry_(nullptr) {}
-
-        Iterator next() const {
-            return entry_ == nullptr || entry_->next == nullptr
-                ? Iterator(nullptr)
-                : Iterator(entry_->next.get());
-        }
-
-        Iterator prev() const {
-            return entry_ == nullptr ? Iterator(nullptr) : Iterator(entry_->prev);
-        }
-
-        T* operator->() const {
-            if (entry_ == nullptr) KPANIC("Tried to dereference list end iterator");
-            return &entry_->value;
-        }
-
-        T& operator*() const {
-            if (entry_ == nullptr) KPANIC("Tried to dereference list end iterator");
-            return entry_->value;
-        }
-
-        explicit operator bool() const {
-            return entry_ != nullptr;
-        }
-    };
-
     List() : head_(nullptr), tail_(nullptr) {}
-
     void push_back(T val) {
-        SharedPtr<Entry> new_entry = new Entry(val);
-        Entry* entry = new_entry.get();
-        if (tail_ != nullptr) {
-            tail_->next = new_entry;
-            entry->prev = tail_;
+        SharedPtr<ListNode<T>> new_node = new ListNode<T>();
+        new_node->val = val;
+        if (tail_ == nullptr) {
+            head_ = new_node;
+            tail_ = new_node;
         } else {
-            head_ = new_entry;
+            tail_->next = new_node;
+            new_node->prev = tail_;
+            tail_ = new_node;
         }
-        tail_ = entry;
     }
-
     void push_front(T val) {
-        SharedPtr<Entry> new_entry = new Entry(val);
-        Entry* entry = new_entry.get();
-        if (head_ != nullptr) {
-            head_->prev = entry;
-            new_entry->next = head_;
+        SharedPtr<ListNode<T>> new_node = new ListNode<T>();
+        new_node->val = val;
+        if (head_ == nullptr) {
+            head_ = new_node;
+            tail_ = new_node;
         } else {
-            tail_ = entry;
+            head_->prev = new_node;
+            new_node->next = head_;
+            head_ = new_node;
         }
-        head_ = new_entry;
     }
-
-    Iterator head() const {
-        return Iterator(head_.get());
+    SharedPtr<ListNode<T>> head() {
+        return head_;
     }
-
-    Iterator tail() const {
-        return Iterator(tail_);
+    SharedPtr<ListNode<T>> tail() {
+        return tail_;
     }
 };
 

@@ -19,7 +19,6 @@ LDFLAGS = [
 ]
 
 TEST_TIMEOUT = 10  # seconds per test
-KERNEL_TEST_MAGIC = "STARTING KERNEL INTEGRATION TEST"
 
 def parse_args():
     parser = argparse.ArgumentParser(prog="buildtool")
@@ -117,15 +116,13 @@ def qemu():
         "-cpu", "cortex-a72",
         "-smp", "1",
         "-m", "512M",
-        "-d", "int,guest_errors",
-        "-D", "qemu.log",
         "-bios", "bin/QEMU_EFI.fd",
         "-drive", "if=none,file=build/kernel.img,format=raw,id=hd0",
         "-device", "virtio-blk-device,drive=hd0",
         "-monitor", "none",
         "-display", "none",
         "-semihosting-config", "enable=on,target=native"
-    ], text=True)
+    ], check=True, text=True)
 
 # main.cc provides the default main(); exclude it when building tests
 # so each test file can supply its own main() instead.
@@ -182,19 +179,13 @@ def _run_test_image(img_path: str) -> tuple[bool, str]:
 
     return timed_out, "".join(chunks)
 
-def _normalized_test_output(output: str) -> list[str]:
-    marker = output.rfind(KERNEL_TEST_MAGIC)
-    if marker != -1:
-        line_end = output.find("\n", marker)
-        output = "" if line_end == -1 else output[line_end + 1:]
-
-    lines = [line.rstrip() for line in output.splitlines()]
-    while lines and not lines[-1]:
-        lines.pop()
-    return lines
-
 def _outputs_match(actual: str, expected: str) -> bool:
-    return _normalized_test_output(actual) == _normalized_test_output(expected)
+    def normalize(s: str) -> list[str]:
+        lines = [line.rstrip() for line in s.splitlines()]
+        while lines and not lines[-1]:
+            lines.pop()
+        return lines
+    return normalize(actual) == normalize(expected)
 
 def _run_one_test(name: str) -> tuple[bool, str]:
     """Build and run a single test. Returns (passed, status)."""
@@ -235,7 +226,7 @@ def _run_one_test(name: str) -> tuple[bool, str]:
             print(f"  --- expected ---")
             print(expected.rstrip())
             print(f"  --- actual ---")
-            print("\n".join(_normalized_test_output(output)))
+            print(output.rstrip())
     finally:
         with open(output_file, "w") as f:
             f.write(output)

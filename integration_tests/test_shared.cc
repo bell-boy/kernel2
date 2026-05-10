@@ -1,6 +1,6 @@
 #include <kstdlib/debug.h>
+#include <kstdlib/kio.h>
 #include <kstdlib/shared.h>
-#include <kstdlib/testing.h>
 
 
 struct Box {
@@ -14,7 +14,7 @@ struct Box {
     }
 };
 
-TEST_MAIN({
+extern "C" void main() {
     int destructed = 0;
 
     {
@@ -45,4 +45,4 @@ TEST_MAIN({
     if (destructed != 2) { KPANIC("final delete"); }
 
     kstd::kprintf("PASSED\n");
-})
+}
