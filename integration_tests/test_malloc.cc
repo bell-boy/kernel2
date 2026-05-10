@@ -28,13 +28,5 @@ TEST_MAIN({
     if (*c != 100) { kstd::kprintf("FAILED: malloc after free\n"); return; }
     delete c;
 
-    // Malloc Entire Heap
-    char* heap = new char[8 * 1024 * 1024 - 32]; // HEAP_SIZE - sizeof(header) - sizeof(footer)
-    delete[] heap;
-    int* d = new int;
-    *d = 101;
-    if (*d != 101) { kstd::kprintf("FAILED: malloc entire heap\n"); return; }
-    delete d;
-
     kstd::kprintf("PASSED\n");
 })

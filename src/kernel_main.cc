@@ -1,4 +1,4 @@
-#include "devices.h"
+#include <devices/discovery.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <limine.h>
@@ -23,6 +23,14 @@ static volatile uint64_t limine_requests_start_marker[] = LIMINE_REQUESTS_START_
 __attribute__((used, section(".limine_requests_end")))
 static volatile uint64_t limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
 
+using init_function_t = void (*)();
+
+extern init_function_t __init_array_start[];
+extern init_function_t __init_array_end[];
+
+extern "C" int atexit() {
+    return 0;
+}
 
 // The following will be our kernel's entry point.
 // If renaming kmain() to something else, make sure to change the
@@ -37,6 +45,12 @@ extern "C" void kmain(void) {
   kstd::kprintf("Initializing Kernel Heap...\n");
   init_malloc();
   kstd::kputs("Initialized Kernel Heap.\n");
+
+  kstd::kprintf("Initializing Global Objects...\n");
+  for (init_function_t *f = __init_array_start; f < __init_array_end; f++) {
+    (*f)();
+  }
+  kstd::kputs("Initialized Global Objects.\n");
 
   if (dtb_request.response != nullptr) {
     kstd::kputs("Found Device Tree Blob.\n");

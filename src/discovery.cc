@@ -1,7 +1,7 @@
 #include "kstdlib/debug.h"
 #include "kstdlib/kio.h"
 #include <stdint.h>
-#include <devices.h>
+#include <devices/discovery.h>
 #include <kstdlib/pair.h>
 #include <kstdlib/maybe.h>
 
@@ -14,6 +14,8 @@
 
 namespace devices {
 using namespace kstd;
+
+List<DeviceProbe*> DEVICE_PROBES;
 
 struct fdt_header {
    uint32_t magic;
@@ -75,11 +77,11 @@ const char* DeviceTreeParser::parse_str() {
     return str;
 }
 
-Maybe<Property> DeviceTreeParser::parse_property() {
+Maybe<DTProperty> DeviceTreeParser::parse_property() {
     parse_nop();
     if (as_be_u32(*(current_++)) != FDT_PROP) {
         current_--;
-        return Maybe<Property>::nothing();
+        return Maybe<DTProperty>::nothing();
     }
 
 
@@ -88,24 +90,24 @@ Maybe<Property> DeviceTreeParser::parse_property() {
     const char* name = dt_strings_ + as_be_u32(pd->nameoff);
     auto len = as_be_u32(pd->len);
     current_ = reinterpret_cast<const uint32_t *>(align_addr(reinterpret_cast<uintptr_t>(reinterpret_cast<const char *>(buffer) + len)));
-    return Maybe<Property>::just(Property{.buffer = buffer, .len = len, .name = name});
+    return Maybe<DTProperty>::just(DTProperty{.buffer = buffer, .len = len, .name = name});
 }
 
-Maybe<Node> DeviceTreeParser::parse_node() {
+Maybe<DTNode> DeviceTreeParser::parse_node() {
     parse_nop();
     if (as_be_u32(*(current_++)) != FDT_BEGIN_NODE) {
         current_--;
-        return Maybe<Node>::nothing();
+        return Maybe<DTNode>::nothing();
     }
     const char *name = parse_str();
-    List<Property> props;
-    Maybe<Property> currp = parse_property();
+    List<DTProperty> props;
+    Maybe<DTProperty> currp = parse_property();
     while(!currp.is_nothing()) {
         props.push_back(currp.get());
         currp = parse_property();
     }
-    List<Node> children;
-    Maybe<Node> current = parse_node();
+    List<DTNode> children;
+    Maybe<DTNode> current = parse_node();
 
     while (!current.is_nothing()) {
         children.push_back(current.get());
@@ -114,14 +116,14 @@ Maybe<Node> DeviceTreeParser::parse_node() {
     parse_nop();
     if (as_be_u32(*(current_++)) != FDT_END_NODE) {
         current_--;
-        return Maybe<Node>::nothing();
+        return Maybe<DTNode>::nothing();
     }
 
-    auto node = Maybe<Node>::just(children, props, name);
+    auto node = Maybe<DTNode>::just(children, props, name);
     return node;
 
 }
-void Node::dump(int level) {
+void DTNode::dump(int level) {
     char prefix[100];
     ASSERT(level < 100);
     for (int i = 0; i < level; ++i) prefix[i] = '-';
@@ -144,5 +146,5 @@ void Node::dump(int level) {
 
 }
 
-Node::Node(kstd::List<Node> children, kstd::List<Property> properties, const char* name) : children_(children), properties_(properties), name_(name) {}
+DTNode::DTNode(kstd::List<DTNode> children, kstd::List<DTProperty> properties, const char* name) : children_(children), properties_(properties), name_(name) {}
 }
