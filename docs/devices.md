@@ -10,11 +10,11 @@ class Property {
     const void* buffer_;
     enum PropertyType {
         /* Collection of DeviceTree Property types */
-    }
+    };
 public:
     Property(const void* buffer) : buffer_(buffer) {}
     /* collection of getter functions for various device node property types made safe by the fact we store the property type */
-}
+};
 class Node {
     List<Node> children_;
     List<Property> properities_;

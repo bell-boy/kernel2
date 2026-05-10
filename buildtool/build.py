@@ -116,13 +116,15 @@ def qemu():
         "-cpu", "cortex-a72",
         "-smp", "1",
         "-m", "512M",
+        "-d", "int,guest_errors",
+        "-D", "qemu.log",
         "-bios", "bin/QEMU_EFI.fd",
         "-drive", "if=none,file=build/kernel.img,format=raw,id=hd0",
         "-device", "virtio-blk-device,drive=hd0",
         "-monitor", "none",
         "-display", "none",
         "-semihosting-config", "enable=on,target=native"
-    ], check=True, text=True)
+    ], text=True)
 
 # main.cc provides the default main(); exclude it when building tests
 # so each test file can supply its own main() instead.

@@ -1,3 +1,4 @@
+#include "devices.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <limine.h>
@@ -33,15 +34,17 @@ extern "C" void kmain(void) {
     kstd::kexit(1);
   }
 
+  kstd::kprintf("Initializing Kernel Heap...\n");
+  init_malloc();
+  kstd::kputs("Initialized Kernel Heap.\n");
+
   if (dtb_request.response != nullptr) {
     kstd::kputs("Found Device Tree Blob.\n");
+    devices::DeviceTreeParser(reinterpret_cast<const uint32_t *>(dtb_request.response->dtb_ptr));
   } else {
     kstd::kputs("[WARN] Failed to get Device Tree Blob.\n");
   }
 
-  kstd::kprintf("Initializing Kernel Heap...\n");
-  init_malloc();
-  kstd::kputs("Initialized Kernel Heap.\n");
 
   main();
   kstd::kexit(0);
