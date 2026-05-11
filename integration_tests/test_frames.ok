@@ -1,0 +1,19 @@
+Single Frame Allocation and Free:
+Allocated Physical Frame: 40000000
+Freed Physical Frame: 40000000
+Repeated Frame Allocations and Frees:
+Allocated Physical Frame: 40000000
+Freed Physical Frame: 40000000
+Allocated Physical Frame: 40000000
+Freed Physical Frame: 40000000
+Allocated Physical Frame: 40000000
+Freed Physical Frame: 40000000
+Allocated Physical Frame: 40000000
+Freed Physical Frame: 40000000
+Allocated Physical Frame: 40000000
+Freed Physical Frame: 40000000
+Contiguous Allocations and Frees:
+Finished contiguous allocations, now freeing...
+Freed contiguous allocations
+Successfully allocated the recently freed page
+PASSED
