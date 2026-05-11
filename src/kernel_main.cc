@@ -1,4 +1,5 @@
 #include "devices.h"
+#include "frame.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <limine.h>
@@ -13,7 +14,22 @@ static volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(6);
 __attribute__((used, section(".limine_requests")))
 static volatile struct limine_dtb_request dtb_request = {
   .id = LIMINE_DTB_REQUEST_ID,
-  .revision = 6
+  .revision = 6,
+  .response = nullptr
+};
+
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_hhdm_request hhdm_request = {
+  .id = LIMINE_HHDM_REQUEST_ID,
+  .revision = 0,
+  .response = nullptr
+};
+
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_memmap_request memmap_request = {
+  .id = LIMINE_MEMMAP_REQUEST_ID,
+  .revision = 0,
+  .response = nullptr
 };
 
 
@@ -37,6 +53,14 @@ extern "C" void kmain(void) {
   kstd::kprintf("Initializing Kernel Heap...\n");
   init_malloc();
   kstd::kputs("Initialized Kernel Heap.\n");
+
+  kstd::kprintf("Initializing Physical Frame Allocator...\n");
+  if (hhdm_request.response != nullptr && memmap_request.response != nullptr) {
+    init_falloc(hhdm_request.response->offset, memmap_request.response);
+    kstd::kprintf("Initialized Physical Frame Allocator.\n");
+  } else {
+    kstd::kprintf("[WARN] Failed to get HHDM offset or Memmap Regions.\n");
+  }
 
   if (dtb_request.response != nullptr) {
     kstd::kputs("Found Device Tree Blob.\n");
