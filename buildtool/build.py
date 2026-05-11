@@ -232,9 +232,9 @@ def _run_one_test(name: str) -> tuple[bool, str]:
         if status == "FAIL":
             with open(ok_file) as f:
                 expected = f.read()
-            print(f"  --- expected ---")
+            print("  --- expected ---")
             print(expected.rstrip())
-            print(f"  --- actual ---")
+            print("  --- actual ---")
             print("\n".join(_normalized_test_output(output)))
     finally:
         with open(output_file, "w") as f:

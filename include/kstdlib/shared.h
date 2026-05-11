@@ -6,31 +6,40 @@ template<typename T>
 class SharedPtr {
     T* ptr_;
     int* ref_count_;
-public:
-    SharedPtr() : ptr_(nullptr), ref_count_(new int(1)) {}
-    SharedPtr(T* ptr) : ptr_(ptr), ref_count_(new int(1)) {}
-    SharedPtr(T val) : ptr_(new T(val)), ref_count_(new int(1)) {}
-    SharedPtr(const SharedPtr<T> &other) : ptr_(other.ptr_), ref_count_(other.ref_count_) {
-        (*ref_count_)++;
-    }
-    template<typename... Args>
-    static SharedPtr<T> make(Args... args) {
-        return SharedPtr<T>(T(args...));
-    }
-    ~SharedPtr() {
+
+    void release() {
+        if (ref_count_ == nullptr) {
+            return;
+        }
         (*ref_count_)--;
         if (*ref_count_ == 0) {
             if (ptr_ != nullptr) delete ptr_;
             delete ref_count_;
         }
     }
+
+public:
+    SharedPtr() : ptr_(nullptr), ref_count_(nullptr) {}
+    SharedPtr(T* ptr) : ptr_(ptr), ref_count_(ptr == nullptr ? nullptr : new int(1)) {}
+    SharedPtr(T val) : ptr_(new T(val)), ref_count_(new int(1)) {}
+    SharedPtr(const SharedPtr<T> &other) : ptr_(other.ptr_), ref_count_(other.ref_count_) {
+        if (ref_count_ != nullptr) (*ref_count_)++;
+    }
+    template<typename... Args>
+    static SharedPtr<T> make(Args... args) {
+        return SharedPtr<T>(T(args...));
+    }
+    ~SharedPtr() {
+        release();
+    }
     SharedPtr<T>& operator=(const SharedPtr<T> &other) {
-        *other.ref_count_ += 1;
-        *ref_count_ -= 1;
-        if (*ref_count_ == 0){
-            if (ptr_ != nullptr) delete ptr_;
-            delete ref_count_;
+        if (this == &other) {
+            return *this;
         }
+        if (other.ref_count_ != nullptr) {
+            *other.ref_count_ += 1;
+        }
+        release();
         ptr_ = other.ptr_;
         ref_count_ = other.ref_count_;
         return *this;
