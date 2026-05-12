@@ -59,7 +59,7 @@ extern "C" void kmain(void) {
     init_falloc(hhdm_request.response->offset, memmap_request.response);
     kstd::kprintf("Initialized Physical Frame Allocator.\n");
   } else {
-    kstd::kprintf("[WARN] Failed to get HHDM offset or Memmap Regions.\n");
+    KPANIC("Failed to get HHDM offset or Memmap Regions.\n");
   }
 
   if (dtb_request.response != nullptr) {
