@@ -4,6 +4,11 @@
 #include <kstdlib/string.h>
 #include <kstdlib/debug.h>
 
+struct Frame {
+    Frame* next;
+    char padding[PAGE_SIZE - sizeof(Frame*)];
+};
+
 uint64_t HHDM_OFFSET = 0;
 inline uint64_t pa2va(uint64_t pa) { return pa + HHDM_OFFSET; }
 inline uint64_t va2pa(uint64_t va) { return va - HHDM_OFFSET; }
@@ -42,7 +47,7 @@ void init_falloc(uint64_t hhdm_offset, struct limine_memmap_response* memmap_res
 /**
  * Allocates a single 4K Physical Frame
  */
-Frame* falloc() {
+void* falloc() {
     if (free_head == nullptr) {
         KPANIC("No more frames");
     }
@@ -50,13 +55,14 @@ Frame* falloc() {
     free_head = free_head->next;
     frames_alloced++;
     memset(reinterpret_cast<void*>(f), 0, sizeof(Frame));
-    return f;
+    return reinterpret_cast<void*>(f);
 }
 
 /**
  * Frees a single 4K Physical Frame
  */
-void ffree(Frame* frame) {
+void ffree(void* frame_) {
+    Frame* frame = reinterpret_cast<Frame*>(frame_);
     ASSERT(reinterpret_cast<uint64_t>(frame) % PAGE_SIZE == 0);
     frames_alloced--;
     frame->next = free_head;
